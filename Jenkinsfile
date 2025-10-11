@@ -6,15 +6,9 @@ pipeline {
         jdk 'JDK21'
     }
 
-    environment {
-        // SonarQube server name (as configured in Jenkins > Manage Jenkins > System)
-        SONARQUBE_ENV = 'SonarQube'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                // Checkout your main branch
                 git branch: 'main', url: 'https://github.com/ShranyaRudraksha/Jenkins.git'
             }
         }
@@ -22,7 +16,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building project using Maven..."
-                // Clean and build the project
                 bat 'mvn clean install'
             }
         }
@@ -30,7 +23,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo "Running SonarQube static analysis..."
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                withSonarQubeEnv('MySonarQube') {
                     bat '''
                         mvn sonar:sonar ^
                         -Dsonar.projectKey=jenkins-demo ^
@@ -52,7 +45,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build and analysis completed successfully!"
+            echo "✅ Build and SonarQube analysis passed!"
         }
         failure {
             echo "❌ Build failed. Check logs and SonarQube dashboard for details."
