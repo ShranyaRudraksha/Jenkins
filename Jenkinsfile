@@ -2,53 +2,65 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven_3.9'
         jdk 'JDK21'
+        maven 'Maven_3.9'
+    }
+
+    environment {
+        APP_NAME = "MyApp"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
+                echo 'Checking out code from Git...'
                 git branch: 'main', url: 'https://github.com/ShranyaRudraksha/Jenkins.git'
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building project using Maven..."
-                bat 'mvn clean install'
+                echo 'Building project using Maven...'
+                bat 'mvn clean compile'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Test') {
             steps {
-                echo "Running SonarQube static analysis..."
-                withSonarQubeEnv('MySonarQube') {
-                    bat '''
-                        mvn sonar:sonar ^
-                        -Dsonar.projectKey=jenkins-demo ^
-                        -Dsonar.host.url=http://localhost:9000
-                    '''
+                echo 'Running tests...'
+                bat 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('Package') {
             steps {
-                echo "Waiting for SonarQube Quality Gate result..."
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                echo 'Packaging application...'
+                bat 'mvn package'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying the application...'
+                // Example: copy WAR to Tomcat (if configured)
+                // bat 'copy target\\myapp.war C:\\Tomcat\\webapps\\'
+                echo 'Deployment simulated (no Tomcat configured)'
             }
         }
     }
 
     post {
         success {
-            echo "✅ Build and SonarQube analysis passed!"
+            echo "✅ Build and Deployment Successful!"
         }
         failure {
-            echo "❌ Build failed. Check logs and SonarQube dashboard for details."
+            echo "❌ Build Failed!"
         }
     }
 }
